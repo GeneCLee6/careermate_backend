@@ -38,7 +38,15 @@ const userSchema = new mongoose.Schema(
             type: String,
         },
     },
-    { timestamps: true },
+    {
+        timestamps: true,
+        toJSON: {
+            transform: (_, user) => {
+                delete user.password;
+                delete user.__v;
+            },
+        },
+    },
 );
 
 const User = mongoose.model("User", userSchema);
