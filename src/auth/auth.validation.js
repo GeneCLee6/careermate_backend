@@ -18,7 +18,26 @@ const loginSchema = z.object({
     password: passwordSchema,
 });
 
+const forgotPasswordSchema = z.object({
+    email: emailSchema,
+});
+
+const verifyCodeSchema = z.object({
+    email: emailSchema,
+    code: z.string().length(6, "Reset code must be 6 characters"),
+});
+
+const resetPasswordSchema = z.object({
+    email: emailSchema,
+    resetToken: z.string().min(1, "Reset token is required"),
+    newPassword: passwordSchema,
+});
+
 module.exports = {
     registerSchema,
     loginSchema,
+    forgotPasswordSchema,
+    verifyCodeSchema,
+    resetPasswordSchema,
+    passwordSchema,
 };

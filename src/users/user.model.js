@@ -37,6 +37,30 @@ const userSchema = new mongoose.Schema(
         avatar: {
             type: String,
         },
+        accountType: {
+            type: String,
+            enum: ["user", "admin"],
+            default: "user",
+        },
+        resetCode: {
+            type: String,
+        },
+        resetCodeExpiry: {
+            type: Date,
+        },
+        resetToken: {
+            type: String,
+        },
+        resetTokenExpiry: {
+            type: Date,
+        },
+        passwordHistory: {
+            type: [String],
+            default: [],
+        },
+        deletedAt: {
+            type: Date,
+        },
     },
     {
         timestamps: true,
@@ -44,6 +68,8 @@ const userSchema = new mongoose.Schema(
             transform: (_, user) => {
                 delete user.password;
                 delete user.__v;
+                delete user.accountType;
+                delete user.passwordHistory;
             },
         },
     },
