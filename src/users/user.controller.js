@@ -4,9 +4,10 @@ const NotFoundException = require("../exceptions/NotFound.exception");
 const UnauthoriedException = require("../exceptions/unauthorized.exception");
 const User = require("./user.model");
 const { MAX_PASSWORD_HISTORY } = require("./constants");
+const { comparePassword, hashPassword } = require("../utils/password");
 
 const getMe = async (req, res) => {
-    const userId = req.params.id;
+    const userId = req.user.id;
     const user = await User.findById(userId).exec();
     if (!user) {
         throw new NotFoundException("User not found");
@@ -18,7 +19,7 @@ const getMe = async (req, res) => {
 };
 
 const updateMe = async (req, res) => {
-    const userId = req.params.id;
+    const userId = req.user.id;
     const user = await User.findByIdAndUpdate(userId, req.body, {
         new: true,
         runValidators: true,
@@ -51,7 +52,7 @@ const updateMyPassword = async (req, res) => {
             );
         }
     }
-    const hashedPassword = await hashedPassword(newPassword);
+    const hashedPassword = await hashPassword(newPassword);
     user.password = hashedPassword;
     let passwordHistory = [...user.passwordHistory, hashedPassword];
     if (passwordHistory.length > MAX_PASSWORD_HISTORY) {
@@ -65,6 +66,46 @@ const updateMyPassword = async (req, res) => {
     res.json({
         success: true,
         message: "Password updated",
+    });
+};
+
+const updateAvatar = async (req, res) => {
+    const { fileKey: tmpKey } = req.body;
+    const userId = req.user.id;
+    if (!tmpKey.startsWith(`tmp/${userId}/`)) {
+        throw new ForbiddenException(
+            "File key doesn't belong to the current user",
+        );
+    }
+
+    // filename from the filekey
+    // tmp/${userId}/xxxxx
+    const filename = tmpKey.slice(`tmp/${userId}/`.length);
+    const fileKey = `avatar/${userId}/${filename}`;
+
+    await copyObject(tmpKey, fileKey);
+
+    await deleteObject(tmpKey);
+
+    const user = await User.findById(userId).exec();
+    if (!user) {
+        throw new NotFoundException("User not found");
+    }
+    const oldAvatarKey = user.avatar;
+    user.avatar = fileKey;
+    await user.save();
+
+    if (oldAvatarKey && oldAvatarKey !== fileKey) {
+        deleteObject(oldAvatarKey).catch((err) => {
+            logger.warn("Failed to delete old avatar", { oldAvatarKey, err });
+        });
+    }
+
+    res.status(200).json({
+        success: true,
+        data: {
+            avatar: fileKey,
+        },
     });
 };
 
@@ -110,12 +151,13 @@ const restoreUser = async (req, res) => {
     });
 };
 
-const UserController = {
+const userController = {
     deleteUser,
     restoreUser,
     getMe,
     updateMe,
     updateMyPassword,
+    updateAvatar,
 };
 
-module.exports = UserController;
+module.exports = userController;

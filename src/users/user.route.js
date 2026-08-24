@@ -1,10 +1,29 @@
 const express = require("express");
-const UserController = require("./user.controller");
+const userController = require("./user.controller");
 const roleGuard = require("../middleware/roleGuard.middleware");
+const { validateBody } = require("../middleware/validation.middleware");
+const {
+    updateMeSchema,
+    updateMyPasswordSchema,
+    updateAvatarSchema,
+} = require("./user.validation");
 
-const UserRouter = express.Router();
+const userRouter = express.Router();
 
-UserRouter.delete("/:id", roleGuard("admin"), UserController.deleteUser);
-UserRouter.post("/:id/restore", roleGuard("admin"), UserController.restoreUser);
+userRouter.get("/me", userController.getMe);
+userRouter.put("/me", validateBody(updateMeSchema), userController.updateMe);
+userRouter.put(
+    "/me/password",
+    validateBody(updateMyPasswordSchema),
+    userController.updateMyPassword,
+);
+userRouter.post(
+    "/me/avatar",
+    validateBody(updateAvatarSchema),
+    userController.updateAvatar,
+);
 
-module.exports = UserRouter;
+userRouter.delete("/:id", roleGuard("admin"), userController.deleteUser);
+userRouter.post("/:id/restore", roleGuard("admin"), userController.restoreUser);
+
+module.exports = userRouter;
