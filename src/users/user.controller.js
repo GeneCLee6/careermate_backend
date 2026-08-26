@@ -5,6 +5,7 @@ const UnauthoriedException = require("../exceptions/unauthorized.exception");
 const User = require("./user.model");
 const { MAX_PASSWORD_HISTORY } = require("./constants");
 const { comparePassword, hashPassword } = require("../utils/password");
+const { deleteObject, copyObject } = require("../utils/s3");
 
 const getMe = async (req, res) => {
     const userId = req.user.id;

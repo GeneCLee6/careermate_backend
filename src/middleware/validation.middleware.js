@@ -1,7 +1,6 @@
-const { registerSchema } = require("../auth/auth.validation");
 const ValidationException = require("../exceptions/validation.exception");
 
-const valiateBody = (schema) => async (req, res, next) => {
+const validateBody = (schema) => async (req, res, next) => {
     const result = await schema.safeParseAsync(req.body);
     if (!result.success) {
         const message = result.error.issues
@@ -13,4 +12,4 @@ const valiateBody = (schema) => async (req, res, next) => {
     next();
 };
 
-module.exports = { valiateBody };
+module.exports = { validateBody };

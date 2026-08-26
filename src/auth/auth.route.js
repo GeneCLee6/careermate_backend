@@ -1,6 +1,6 @@
 const express = require("express");
 const authController = require("./auth.controller");
-const { valiateBody } = require("../middleware/validation.middleware");
+const { validateBody } = require("../middleware/validation.middleware");
 const {
     registerSchema,
     loginSchema,
@@ -15,23 +15,23 @@ const authRouter = express.Router();
 
 authRouter.post(
     "/register",
-    valiateBody(registerSchema),
+    validateBody(registerSchema),
     authController.register,
 );
-authRouter.post("/login", valiateBody(loginSchema), authController.login);
+authRouter.post("/login", validateBody(loginSchema), authController.login);
 authRouter.post(
     "/forgot-password",
-    valiateBody(forgotPasswordSchema),
+    validateBody(forgotPasswordSchema),
     authController.forgotPassword,
 );
 authRouter.post(
     "/verify-code",
-    valiateBody(verifyCodeSchema),
+    validateBody(verifyCodeSchema),
     authController.verifyCode,
 );
 authRouter.post(
     "/reset-password",
-    valiateBody(resetPasswordSchema),
+    validateBody(resetPasswordSchema),
     authController.resetPassword,
 );
 
