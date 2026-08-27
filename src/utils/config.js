@@ -1,4 +1,4 @@
-require("dotenv").config();
+require("dotenv").config({ quiet: true });
 
 const requiredConfigs = {
     MONGODB_URI: process.env.MONGODB_URI,

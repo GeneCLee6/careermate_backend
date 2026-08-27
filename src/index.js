@@ -1,28 +1,41 @@
+const app = require("./app");
 const config = require("./utils/config");
-const helmet = require("helmet");
-const express = require("express");
-const cors = require("cors");
 const logger = require("./utils/logger");
-const morganMiddleware = require("./middleware/morgan.middleware");
-const rateLimiter = require("./middleware/rateLimit.middleware");
 const connectDB = require("./utils/db");
-const v1Router = require("./routes");
-const errorHandler = require("./middleware/error.middleware");
 
-const { PORT = 3000 } = process.env;
+const SHUTDOWN_TIMEOUT = 10 * 1000;
 
-const app = express();
-app.use(helmet());
-app.use(morganMiddleware);
-app.use(rateLimiter);
-app.use(express.json());
-app.use(cors());
+const start = async () => {
+    await connectDB();
+    const server = app.listen(config.PORT, () => {
+        logger.info(`Server listening on port ${config.PORT}`);
+    });
 
-app.use("/v1", v1Router);
+    const shutdown = (signal) => {
+        logger.info(`${signal} received, shutting down now`);
+        server.close(() => {
+            mongoose.connection.close().then(() => {
+                logger.info("DB connection closed");
+                process.exit(0);
+            });
+        });
 
-app.use(errorHandler);
+        setTimeout(() => {
+            logger.error("Shutdown failed");
+            process.exit(1);
+        }, SHUTDOWN_TIMEOUT);
+    };
 
-connectDB();
-app.listen(config.PORT, () => {
-    logger.info(`Server listening on port ${config.PORT}`);
-});
+    process.on("SIGTERM", () => shutdown("SIGTERM"));
+    process.on("SIGINT", () => shutdown("SIGINT"));
+    process.on("unhandledRejection", (err) => {
+        logger.error("Unhandled rejection", { err });
+        process.exit(1);
+    });
+    process.on("uncaughtException", (err) => {
+        logger.error("Unhandled exception", { err });
+        process.exit(1);
+    });
+};
+
+start();
